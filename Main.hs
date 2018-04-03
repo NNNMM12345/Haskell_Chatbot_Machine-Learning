@@ -41,7 +41,9 @@ options = [ whatIs "name" "Call me"
           , whatIs "country" "my country is"
           , whatIs "drink" "my favorite drink is"
           , whatIs "car" "my favorite car is" 
-          ,whatIs "class" "my favorite class or subject is" 
+          , whatIs "class" "my favorite class or subject is" 
+          , whatIs "tech" "my favorite tech company is" 
+          , whatIs "os" "my favorite os is" 
           , Option { key = "school" 
                    , command = "I go to"  
                    , question = "what school do I go to"
@@ -94,6 +96,18 @@ options = [ whatIs "name" "Call me"
                    , command = "my favorite class is" 
                    , question = "what is my favorite class" 
                    , answer = "Your favorite class is"
+                   }
+                   
+          , Option { key = "tech" 
+                   , command = "my favorite tech company is" 
+                   , question = "what is my favorite tech company" 
+                   , answer = "Your favorite tech company is "
+                   }
+                   
+          , Option { key = "os" 
+                   , command = "my favorite os is" 
+                   , question = "what is my favorite os" 
+                   , answer = "Your favorite os is"
                    }
           ]
 
@@ -226,7 +240,7 @@ calculator = do
         getInput $ runSequence operator first))
 
 getInput nextOperations = do
-    line <- getInputLine ">> "
+    line <- getInputLine ">>> "
     case line of
       Nothing -> return ()
       Just "quit" -> return ()
@@ -238,7 +252,7 @@ main :: IO ()
 main = runInputT defaultSettings (start >> loop M.empty)
    where
        loop values = do
-           minput <- getInputLine ">> "
+           minput <- getInputLine ">>> "
            case minput of
                Nothing -> return ()
                Just "quit" -> return ()
@@ -255,7 +269,3 @@ start = do
     outputStrLn "Hello"
     outputStrLn "Welcome to Haskell Chat Bot, user created by fuskerbrothers"
     outputStrLn "You will now be taken to the program, Thanks for using our software" 
-    outputStrLn "if you wish to continue the program press anything if you wish to quit it type yes and then press enter" 
-    getInput $ \case 
-                 "yes" -> return ()
-                 otherwise -> outputStrLn "Lets start the program the instructions will come with this programs download" 
