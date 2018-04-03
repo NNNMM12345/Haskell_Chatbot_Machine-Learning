@@ -1,6 +1,7 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Main where
 
@@ -16,6 +17,7 @@ import           "base" Data.Foldable
 import           "base" Data.Maybe
 import           "base" Data.Char
 import           "base" System.Exit
+import           "base" System.Environment
 
 data Option = Option { key :: String
                      , command :: String
@@ -33,6 +35,13 @@ options :: [Option]
 options = [ whatIs "name" "Call me"
           , whatIs "age" "I am"
           , whatIs "city" "I live in"
+          , whatIs "like" "I like" 
+          , whatIs "zip code" "my zip code is" 
+          , whatIs "phone number" "my phone number is" 
+          , whatIs "country" "my country is"
+          , whatIs "drink" "my favorite drink is"
+          , whatIs "car" "my favorite car is" 
+          ,whatIs "class" "my favorite class or subject is" 
           , Option { key = "school" 
                    , command = "I go to"  
                    , question = "what school do I go to"
@@ -43,6 +52,48 @@ options = [ whatIs "name" "Call me"
                    , command = "I get"    
                    , question = "what are my grades"
                    , answer = "Your grades are"
+                   }
+                   
+                    , Option { key = "like" 
+                   , command = "I like" 
+                   , question = "what do I like"
+                   , answer = "You like" 
+                   }
+                   
+          , Option { key = "zip code" 
+                   , command = "I have the zip code"  
+                   , question = "what is my zip code"
+                   , answer = "Your zip code"
+                   } 
+                   
+          , Option { key = "phone number" 
+                   , command = "I have the phone number"  
+                   , question = "what is my phone number"
+                   , answer = "Your phone number is"
+                   }
+                   
+          , Option { key = "country" 
+                   , command = "I live in the" 
+                   , question = "what country do I live in" 
+                   , answer = "Your country is"
+                   }
+                   
+          , Option { key = "drink" 
+                   , command = "my favorite drink is"  
+                   , question = "what is my favorite drink"
+                   , answer = "Your favorite drink is"
+                   } 
+                   
+          , Option { key = "car" 
+                   , command = "my favorite car is" 
+                   , question = "what is my favorite car" 
+                   , answer = "Yur favorite car is"
+                   }
+                   
+          , Option { key = "class" 
+                   , command = "my favorite class is" 
+                   , question = "what is my favorite class" 
+                   , answer = "Your favorite class is"
                    }
           ]
 
@@ -70,7 +121,7 @@ type Answer = String
 type Key = String
 data Value = Value { object :: String, reason :: String }
 type Values = M.Map Key Value
-data Effect = ChangeValue (Values -> Values) | Say (Values -> Answer)
+data Effect = ChangeValue (Values -> Values) | Say (Values -> Answer) | Calculate
 type Action = (Command, Result -> Effect)
 
 specialActions:: [Action]
@@ -92,7 +143,13 @@ specialActions =
  , ( "why is my"
    , whyIsMy
    )
- , commandResponse "tell me a joke" "never"
+ , commandResponse "tell me a joke" "I hate Russian dolls, they're so full of themselves."
+ 
+ , ( "why is my" 
+    , whyIsMy 
+   )
+ , commandResponse "tell me another joke" "Velcro - what a rip-off!"
+ , ( "calculator", const Calculate)
  ]
 
 commandResponse command response = (command, const $ Say $ const response)
@@ -122,13 +179,63 @@ ai request =
     applyCommand (command, val2effect) =
         sanitize command `stripPrefix` sanitize request
         & fmap (val2effect . sanitize)
+        
+-- parses the first arithmetic operator in a string
+parseOperator :: String -> Maybe Char
+parseOperator [] = Nothing
+parseOperator (x:xs)
+    | x == '*' = Just '*'
+    | x == '/' = Just '/'
+    | x == '+' = Just '+'
+    | x == '-' = Just '-'
+    | otherwise = parseOperator xs
+
+parseNum :: String -> Maybe Double
+parseNum x =
+    let parsed = reads x :: [(Double,String)]
+    in case parsed of
+        [(a,"")] -> Just a
+        [(_,_)] -> Nothing
+        [] -> Nothing
+
+compute :: Maybe Char -> Maybe Double -> Maybe Double -> Maybe Double
+compute Nothing _ _ = Nothing
+compute _ Nothing _ = Nothing
+compute _ _ Nothing = Nothing
+compute (Just c) (Just x) (Just y)
+    | c == '*' = Just $ x * y
+    | c == '/' = Just $ x / y
+    | c == '+' = Just $ x + y
+    | c == '-' = Just $ x - y
+
+checkSuccess Nothing = outputStrLn "Failed. Check correctness of inputs"
+checkSuccess (Just r) = outputStrLn $ "Result: " ++ (show r)
+
+runSequence os xs ys =
+    checkSuccess $ compute (parseOperator os) (parseNum xs) (parseNum ys)
+
+calculator :: InputT IO ()
+calculator = do
+    outputStrLn "Welcome to the calculator made by fuskerbrothers for you"
+    outputStrLn "Please enter an operator: * / + -"
+    
+    getInput (\operator -> do
+      outputStrLn "Enter first variable"
+      getInput (\first -> do
+        outputStrLn "Enter second variable"
+        getInput $ runSequence operator first))
+
+getInput nextOperations = do
+    line <- getInputLine ">> "
+    case line of
+      Nothing -> return ()
+      Just "quit" -> return ()
+      Just input -> nextOperations input
 
 
 
 main :: IO ()
-main = do 
-    start
-    runInputT defaultSettings (loop M.empty)
+main = runInputT defaultSettings (start >> loop M.empty)
    where
        loop values = do
            minput <- getInputLine ">> "
@@ -140,14 +247,15 @@ main = do
                                Say answer -> do
                                 outputStrLn (answer values)
                                 loop values
+                               Calculate -> do
+                                calculator
+                                loop values
                                 
-start :: IO () 
 start = do 
-    putStrLn "Hello"
-    putStrLn "Welcome to Haskell Chat Bot, user created by fuskerbrothers"
-    putStrLn "You will now be taken to the program, Thanks for using our software" 
-    putStrLn "if you wish to continue the program press anything if you wish to quit it type yes and then press enter" 
-    line <- getLine
-    when (line == "yes") exitSuccess
-    putStrLn "Lets start the program the instructions will come with this programs download" 
-
+    outputStrLn "Hello"
+    outputStrLn "Welcome to Haskell Chat Bot, user created by fuskerbrothers"
+    outputStrLn "You will now be taken to the program, Thanks for using our software" 
+    outputStrLn "if you wish to continue the program press anything if you wish to quit it type yes and then press enter" 
+    getInput $ \case 
+                 "yes" -> return ()
+                 otherwise -> outputStrLn "Lets start the program the instructions will come with this programs download" 
