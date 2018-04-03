@@ -33,6 +33,13 @@ options :: [Option]
 options = [ whatIs "name" "Call me"
           , whatIs "age" "I am"
           , whatIs "city" "I live in"
+          , whatIs "like" "I like" 
+          , whatIs "zip code" "my zip code is" 
+          , whatIs "phone number" "my phone number is" 
+          , whatIs "country" "my country is"
+          , whatIs "drink" "my favorite drink is"
+          , whatIs "car" "my favorite car is" 
+          ,whatIs "class" "my favorite class or subject is" 
           , Option { key = "school" 
                    , command = "I go to"  
                    , question = "what school do I go to"
@@ -43,6 +50,48 @@ options = [ whatIs "name" "Call me"
                    , command = "I get"    
                    , question = "what are my grades"
                    , answer = "Your grades are"
+                   }
+                   
+                    , Option { key = "like" 
+                   , command = "I like" 
+                   , question = "what do I like"
+                   , answer = "You like" 
+                   }
+                   
+          , Option { key = "zip code" 
+                   , command = "I have the zip code"  
+                   , question = "what is my zip code"
+                   , answer = "Your zip code"
+                   } 
+                   
+          , Option { key = "phone number" 
+                   , command = "I have the phone number"  
+                   , question = "what is my phone number"
+                   , answer = "Your phone number is"
+                   }
+                   
+          , Option { key = "country" 
+                   , command = "I live in the" 
+                   , question = "what country do I live in" 
+                   , answer = "Your country is"
+                   }
+                   
+          , Option { key = "drink" 
+                   , command = "my favorite drink is"  
+                   , question = "what is my favorite drink"
+                   , answer = "Your favorite drink is"
+                   } 
+                   
+          , Option { key = "car" 
+                   , command = "my favorite car is" 
+                   , question = "what is my favorite car" 
+                   , answer = "Yur favorite car is"
+                   }
+                   
+          , Option { key = "class" 
+                   , command = "my favorite class is" 
+                   , question = "what is my favorite class" 
+                   , answer = "Your favorite class is"
                    }
           ]
 
@@ -92,7 +141,12 @@ specialActions =
  , ( "why is my"
    , whyIsMy
    )
- , commandResponse "tell me a joke" "never"
+ , commandResponse "tell me a joke" "I hate Russian dolls, they're so full of themselves."
+ 
+ , ( "why is my" 
+    , whyIsMy 
+   )
+ , commandResponse "tell me another joke" "Velcro - what a rip-off!" 
  ]
 
 commandResponse command response = (command, const $ Say $ const response)
@@ -150,4 +204,3 @@ start = do
     line <- getLine
     when (line == "yes") exitSuccess
     putStrLn "Lets start the program the instructions will come with this programs download" 
-
