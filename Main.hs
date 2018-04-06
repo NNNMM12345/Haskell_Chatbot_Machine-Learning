@@ -294,6 +294,7 @@ start = do
     putStrLn "Hello I'm a preprogrammed chat bot"
     putStrLn "Welcome to Haskell Chat Bot, created by fuskerbrothers software group"
     putStrLn "You will now be taken to the program, Thanks for using our software" 
+    putStrLn "We hope you have a great time and enjoy the program"
     line <- getLine
     when (line == "yes") exitSuccess
     putStrLn "Lets start the chat bot program" 
