@@ -29,7 +29,7 @@ data Option = Option { key :: String
 whatIs key command = Option { key = key
                             , command = command
                             , question = "what is my " ++ key
-                            , answer = "Your " ++ key ++ " is"
+                            , answer = "Your " ++ key ++ " is" 
                             }
                             
 options :: [Option]
@@ -46,6 +46,12 @@ options = [ whatIs "name" "Call me"
           , whatIs "technology" "my favorite tech company is" 
           , whatIs "os" "my favorite os is" 
           , whatIs "food" "my favorite food is" 
+          , Option { key = "name" 
+                   , command = "I get called" 
+                   , question = "what do I get called"
+                   , answer = "You get called"
+                   }
+          
           , Option { key = "school" 
                    , command = "I go to"  
                    , question = "what school do I go to"
@@ -74,12 +80,6 @@ options = [ whatIs "name" "Call me"
                    , command = "I have the phone number"  
                    , question = "what is my phone number"
                    , answer = "Your phone number is"
-                   }
-                   
-          , Option { key = "country" 
-                   , command = "I live in the" 
-                   , question = "what country do I live in" 
-                   , answer = "Your country is"
                    }
                    
           , Option { key = "drink" 
@@ -117,7 +117,7 @@ options = [ whatIs "name" "Call me"
                    , question = "what is my favorite food" 
                    , answer = "Your favorite food is"
                    }
-          ]
+            ]
 
 optionToActions :: Option -> [Action]
 optionToActions Option{..} =
@@ -166,6 +166,12 @@ specialActions =
    , whyIsMy
    )
  , commandResponse "tell me a joke" "I hate Russian dolls, they're so full of themselves."
+ 
+ , ( "why is my"
+   , whyIsMy
+   )
+ , commandResponse "tell me one more joke" "This is more of a thought question but what came first the chicken or the egg"
+ 
  
  , ( "why is my"
    , whyIsMy
@@ -280,7 +286,7 @@ main = do
                                 loop values
                                Calculate -> do
                                 calculator
-                                loop values
+                                loop values 
                                 
 
 start :: IO ()
@@ -290,4 +296,4 @@ start = do
     putStrLn "You will now be taken to the program, Thanks for using our software" 
     line <- getLine
     when (line == "yes") exitSuccess
-    putStrLn "Lets start the chat bot program"
+    putStrLn "Lets start the chat bot program" 
