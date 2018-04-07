@@ -143,7 +143,7 @@ type Answer = String
 type Key = String
 data Value = Value { object :: String, reason :: String }
 type Values = M.Map Key Value
-data Effect = ChangeValue (Values -> Values) | Say (Values -> Answer) | Calculate
+data Effect = ChangeValue (Values -> Values) | Say (Values -> Answer) | Calculate | Converse
 type Action = (Command, Result -> Effect)
 
 specialActions:: [Action]
@@ -183,6 +183,7 @@ specialActions =
    )
  , commandResponse "tell me one more joke" "Velcro - what a rip-off!"
  , ( "calculator", const Calculate)
+ , ( "let's converse", const Converse)
  ]
 
 commandResponse command response = (command, const $ Say $ const response)
@@ -267,26 +268,37 @@ getInput nextOperations = do
       Just "quit" -> return ()
       Just input -> nextOperations input
 
+conversation values = do
+  case M.lookup "name" values of
+    Just (Value name _) -> do
+      outputStrLn ("Hey " ++ name ++ " how are you feeling?")
+      getInput (\feeling -> do
+        outputStrLn ("I see you're feeling " ++ feeling)
+        loop $ M.insert "feeling" (Value feeling "") values)
+    Nothing -> do
+      outputStrLn "What's your name?"
+      getInput (\name -> conversation (M.insert "name" (Value name "") values))
+
+   
+
+loop values = do
+   getInput $
+       \input -> case ai input of
+                    ChangeValue changer -> loop (changer values)
+                    Say answer -> do
+                      outputStrLn (answer values)
+                      loop values
+                    Calculate -> do
+                      calculator
+                      loop values
+                    Converse -> conversation values
 
 
 main :: IO ()
 main = do 
     start
     runInputT defaultSettings (loop M.empty)
-   where
-       loop values = do
-           minput <- getInputLine ">>> "
-           case minput of
-               Nothing -> return ()
-               Just "quit" -> return ()
-               Just input -> case ai input of
-                               ChangeValue changer -> loop (changer values)
-                               Say answer -> do
-                                outputStrLn (answer values)
-                                loop values
-                               Calculate -> do
-                                calculator
-                                loop values 
+
                                 
 
 start :: IO ()
