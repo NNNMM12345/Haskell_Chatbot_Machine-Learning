@@ -268,18 +268,40 @@ getInput nextOperations = do
       Just "quit" -> return ()
       Just input -> nextOperations input
 
-conversation values = do
-  case M.lookup "name" values of
-    Just (Value name _) -> do
-      outputStrLn ("Hey " ++ name ++ " how are you feeling?")
-      getInput (\feeling -> do
-        outputStrLn ("I see you're feeling " ++ feeling)
-        loop $ M.insert "feeling" (Value feeling "") values)
-    Nothing -> do
-      outputStrLn "What's your name?"
-      getInput (\name -> conversation (M.insert "name" (Value name "") values))
 
-   
+data Dependency = Dependency [String] ([String] -> String)
+
+dependencies :: M.Map Key Dependency
+dependencies =
+  M.fromList
+    [ ("feeling", Dependency ["name"] (\[name] -> "Hey " ++ name ++ " how are you feeling?"))
+    , ("food", Dependency ["feeling", "name"] (\[feeling, name] -> "I know you are feeling " ++ feeling ++ " " ++ name ++ " But what is your favorite food?"))
+    , ("strong", Dependency ["age","height"] (\[age,height] -> "Being " ++ age ++ " old and " ++ height ++ " tall, how strong are you?"))
+    , ("game", Dependency ["name"] (\[name] -> "What's your favorite game "++ name ++ "?"))
+    ]
+
+conversations =
+  [ "food", "game", "strong" ]
+
+
+conversation values [] = loop values
+conversation values (key:convos) = do
+  case M.lookup key dependencies of
+    Nothing -> do
+      outputStrLn $ "What is your " ++ key
+      getInput (\keyVal -> conversation (M.insert key (Value keyVal "") values) convos)
+    Just (Dependency otherDeps message) ->
+      let runDependency newVals [] = do
+            let results = otherDeps & map (\dep -> M.lookup dep newVals & fromJust & object)
+            outputStrLn (message results)
+            getInput (\keyVal -> conversation (M.insert key (Value keyVal "") newVals) convos)
+          runDependency currVals (otherOtherDep : deps) = do
+            case M.lookup otherOtherDep currVals of
+              Nothing -> conversation currVals (otherOtherDep:(key:convos))
+              Just exists -> runDependency currVals deps
+
+      in runDependency values otherDeps
+
 
 loop values = do
    getInput $
@@ -291,7 +313,7 @@ loop values = do
                     Calculate -> do
                       calculator
                       loop values
-                    Converse -> conversation values
+                    Converse -> conversation values conversations
 
 
 main :: IO ()
