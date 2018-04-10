@@ -117,6 +117,12 @@ options = [ whatIs "name" "Call me"
                    , question = "what is my favorite food" 
                    , answer = "Your favorite food is"
                    }
+                   
+          , Option { key = "console" 
+                   , command = "My favorite console is"
+                   , question = "what is my favorite console"
+                   , answer = "Your favorite console is"
+                   }
             ]
 
 optionToActions :: Option -> [Action]
@@ -143,7 +149,7 @@ type Answer = String
 type Key = String
 data Value = Value { object :: String, reason :: String }
 type Values = M.Map Key Value
-data Effect = ChangeValue (Values -> Values) | Say (Values -> Answer) | Calculate | Converse
+data Effect = ChangeValue (Values -> Values) | Say (Values -> Answer) | Calculate | Converse | Chem String
 type Action = (Command, Result -> Effect)
 
 specialActions:: [Action]
@@ -184,8 +190,11 @@ specialActions =
  , commandResponse "tell me one more joke" "Velcro - what a rip-off!"
  , ( "calculator", const Calculate)
  , ( "let's converse", const Converse)
+ , ( "what is the pH of", \compound -> Chem compound)
  ]
 
+-- \compound = to name of an entity 
+-- this is the definition of 'commandResponse'
 commandResponse command response = (command, const $ Say $ const response)
 
 whyIsMy suffix = case words suffix of
@@ -277,11 +286,14 @@ dependencies =
     [ ("feeling", Dependency ["name"] (\[name] -> "Hey " ++ name ++ " how are you feeling?"))
     , ("food", Dependency ["feeling", "name"] (\[feeling, name] -> "I know you are feeling " ++ feeling ++ " " ++ name ++ " But what is your favorite food?"))
     , ("strong", Dependency ["age","height"] (\[age,height] -> "Being " ++ age ++ " old and " ++ height ++ " tall, how strong are you?"))
-    , ("game", Dependency ["name"] (\[name] -> "What's your favorite game "++ name ++ "?"))
+    , ("game", Dependency ["name"] (\[name] -> "What's your favorite game " ++ name ++ " ?"))
+    , ("console" , Dependency [] (const "What is your favorite console ?")) 
+    , ("os" , Dependency [] (const "What's your favorite os?"))
+    , ("car" , Dependency ["name"] (\[name] -> "What is your favorite car? " ++ name))
     ]
 
 conversations =
-  [ "food", "game", "strong" ]
+  [ "food", "game", "strong", "console", "os", "car" ]
 
 
 conversation values [] = loop values
@@ -314,6 +326,19 @@ loop values = do
                       calculator
                       loop values
                     Converse -> conversation values conversations
+                    Chem compound -> do
+                      let list = [("water", 7), ("sulphuric acid", 0.3), ("sulfuric acid", 0.3), ("hydroflouric acid", -3), ("nitric acid", 1), ("sodium hydroxide", 14), ("caustic soda", 14), ("lye", 14), ("potassium hydoxide", 13)]
+                      --lookup compound list  
+                      case lookup compound list of
+                        Just pH -> outputStrLn $ "The pH of " ++ compound ++ " is " ++ show pH 
+                        Nothing -> outputStrLn $ "I don't know the pH of " ++ compound 
+                     {- case compound of
+                        "water" -> outputStrLn "pH = 7"
+                        "sulphuric acid" -> outputStrLn "pH = 1" 
+                        "sulfuric acid" -> outputStrLn "pH = 1"
+                        "hydroflouric acid" -> outputStrLn "pH = -3"
+                        _       -> outputStrLn $ "I don't know about " ++ compound -} 
+                      loop values 
 
 
 main :: IO ()
