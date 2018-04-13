@@ -46,6 +46,7 @@ options = [ whatIs "name" "Call me"
           , whatIs "technology" "my favorite tech company is" 
           , whatIs "os" "my favorite os is" 
           , whatIs "food" "my favorite food is" 
+          , whatIs "learn" "my favorite thing to learn about is" 
           , Option { key = "name" 
                    , command = "I get called" 
                    , question = "what do I get called"
@@ -122,6 +123,12 @@ options = [ whatIs "name" "Call me"
                    , command = "My favorite console is"
                    , question = "what is my favorite console"
                    , answer = "Your favorite console is"
+                   } 
+                   
+          , Option { key = "learn" 
+                   , command = "I go to"  
+                   , question = "what is my favorite thing to learn"
+                   , answer = "Your favorite thing to learn about is"
                    }
             ]
 
@@ -149,7 +156,7 @@ type Answer = String
 type Key = String
 data Value = Value { object :: String, reason :: String }
 type Values = M.Map Key Value
-data Effect = ChangeValue (Values -> Values) | Say (Values -> Answer) | Calculate | Converse | Chem String
+data Effect = ChangeValue (Values -> Values) | Say (Values -> Answer) | Calculate | Converse | Chem String | Atom String 
 type Action = (Command, Result -> Effect)
 
 specialActions:: [Action]
@@ -178,6 +185,11 @@ specialActions =
    )
  , commandResponse "tell me one more joke" "This is more of a thought question but what came first the chicken or the egg"
  
+ , ( "why is my" 
+   , whyIsMy 
+   ) 
+ , commandResponse "hey what do you like" "Well I enjoy chatting with like you and other people"
+ 
  
  , ( "why is my"
    , whyIsMy
@@ -191,6 +203,7 @@ specialActions =
  , ( "calculator", const Calculate)
  , ( "let's converse", const Converse)
  , ( "what is the pH of", \compound -> Chem compound)
+ , ( "what is the atomic mass of", \compound -> Atom compound) 
  ]
 
 -- \compound = to name of an entity 
@@ -290,10 +303,11 @@ dependencies =
     , ("console" , Dependency [] (const "What is your favorite console ?")) 
     , ("os" , Dependency [] (const "What's your favorite os?"))
     , ("car" , Dependency ["name"] (\[name] -> "What is your favorite car? " ++ name))
+    , ("grades" , Dependency ["name"] (\[name] -> "What are your grades?" ++ name)) 
     ]
 
 conversations =
-  [ "food", "game", "strong", "console", "os", "car" ]
+  [ "food", "game", "strong", "console", "os", "car", "grades"]
 
 
 conversation values [] = loop values
@@ -332,6 +346,13 @@ loop values = do
                       case lookup compound list of
                         Just pH -> outputStrLn $ "The pH of " ++ compound ++ " is " ++ show pH 
                         Nothing -> outputStrLn $ "I don't know the pH of " ++ compound 
+                      loop values 
+                    Atom compound -> do 
+                      let list = [("hydrogen", 1.008), ("helium", 4.003), ("lithium", 6.94), ("beryillium", 9.0122), ("boron", 10.81), ("carbon", 12.011), ("nitrogen", 14.007), ("oxygen", 15.999), ("flourine", 18.998)] 
+                      case lookup compound list of 
+                        Just number -> outputStrLn $ "The atomic weight of " ++ compound ++ " is " ++ show number
+                        Nothing -> outputStrLn $ "I don't know the atomic mass of " ++ show compound 
+                      loop values 
                      {- case compound of
                         "water" -> outputStrLn "pH = 7"
                         "sulphuric acid" -> outputStrLn "pH = 1" 
@@ -350,8 +371,8 @@ main = do
 
 start :: IO ()
 start = do 
-    putStrLn "Hello I'm a preprogrammed chat bot"
-    putStrLn "Welcome to Haskell Chat Bot, created by fuskerbrothers software group"
+    putStrLn "Hello, I'm a preprogrammed chat bot"
+    putStrLn "Welcome to Haskell-Chat-Bot, created by fuskerbrothers software group"
     putStrLn "You will now be taken to the program, Thanks for using our software" 
     putStrLn "We hope you have a great time and enjoy the program"
     line <- getLine
